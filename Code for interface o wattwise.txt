@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clean Energy Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #6bffa0 0%, #3ac7ff 100%);
+        }
+        .result-card {
+            transition: all 0.3s ease;
+        }
+        .result-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .input-highlight {
+            box-shadow: 0 0 0 2px rgba(74, 222, 128, 0.5);
+        }
+        .animate-pulse {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="gradient-bg py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto text-center">
+            <h1 class="text-4xl font-extrabold text-white sm:text-5xl sm:tracking-tight lg:text-6xl">
+                Clean Energy Calculator
+            </h1>
+            <p class="mt-5 max-w-xl mx-auto text-xl text-white">
+                Discover how much you can save and reduce your carbon footprint with renewable energy
+            </p>
+        </div>
+    </div>
+
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 -mt-10">
+        <div class="bg-white rounded-xl shadow-xl overflow-hidden">
+            <div class="p-6 sm:p-8">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Input Section -->
+                    <div class="md:col-span-1 bg-gray-50 p-6 rounded-lg">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-6">Your Energy Usage</h2>
+                        
+                        <div class="space-y-5">
+                            <div>
+                                <label for="kwh" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Monthly Electricity Usage (kWh)
+                                </label>
+                                <div class="relative">
+                                    <input type="number" id="kwh" 
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 input-highlight"
+                                        placeholder="e.g. 500" min="0" step="1">
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                        <span class="text-gray-500">kWh</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label for="location" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Location
+                                </label>
+                                <select id="location" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 input-highlight">
+                                    <option value="">Select your state</option>
+                                    <option value="CA">California</option>
+                                    <option value="TX">Texas</option>
+                                    <option value="FL">Florida</option>
+                                    <option value="NY">New York</option>
+                                    <option value="PA">Pennsylvania</option>
+                                    <option value="IL">Illinois</option>
+                                    <option value="OH">Ohio</option>
+                                    <option value="GA">Georgia</option>
+                                    <option value="NC">North Carolina</option>
+                                    <option value="MI">Michigan</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label for="bill" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Average Monthly Bill ($)
+                                </label>
+                                <div class="relative">
+                                    <input type="number" id="bill" 
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-green-500 focus:border-green-500 input-highlight"
+                                        placeholder="e.g. 100" min="0" step="1">
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                        <span class="text-gray-500">$</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button id="calculate-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition duration-300 flex items-center justify-center">
+                                <i class="fas fa-bolt mr-2"></i> Calculate Savings
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Results Section -->
+                    <div class="md:col-span-2">
+                        <div id="results" class="space-y-6">
+                            <div class="text-center py-12">
+                                <i class="fas fa-solar-panel text-5xl text-gray-300 mb-4"></i>
+                                <h3 class="text-lg font-medium text-gray-500">Enter your details to see your clean energy options</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const calculateBtn = document.getElementById('calculate-btn');
+            const kwhInput = document.getElementById('kwh');
+            const locationInput = document.getElementById('location');
+            const billInput = document.getElementById('bill');
+            const resultsDiv = document.getElementById('results');
+            
+            // Sample data for different states (sun hours, wind potential, etc.)
+            const stateData = {
+                'CA': { solarPotential: 'High', windPotential: 'Medium', sunHours: 5.5, electricityRate: 0.22 },
+                'TX': { solarPotential: 'Very High', windPotential: 'High', sunHours: 5.2, electricityRate: 0.12 },
+                'FL': { solarPotential: 'High', windPotential: 'Low', sunHours: 5.0, electricityRate: 0.13 },
+                'NY': { solarPotential: 'Medium', windPotential: 'Medium', sunHours: 4.0, electricityRate: 0.20 },
+                'PA': { solarPotential: 'Medium', windPotential: 'Medium', sunHours: 4.2, electricityRate: 0.15 },
+                'IL': { solarPotential: 'Medium', windPotential: 'High', sunHours: 4.3, electricityRate: 0.14 },
+                'OH': { solarPotential: 'Medium', windPotential: 'Medium', sunHours: 4.1, electricityRate: 0.13 },
+                'GA': { solarPotential: 'High', windPotential: 'Low', sunHours: 4.8, electricityRate: 0.12 },
+                'NC': { solarPotential: 'High', windPotential: 'Medium', sunHours: 4.7, electricityRate: 0.12 },
+                'MI': { solarPotential: 'Low', windPotential: 'Medium', sunHours: 3.9, electricityRate: 0.16 }
+            };
+            
+            calculateBtn.addEventListener('click', function() {
+                const kwh = parseFloat(kwhInput.value);
+                const location = locationInput.value;
+                const bill = parseFloat(billInput.value);
+                
+                // Validate inputs
+                if (isNaN(kwh) || kwh <= 0 || !location || isNaN(bill) || bill <= 0) {
+                    alert('Please fill in all fields with valid numbers');
+                    return;
+                }
+                
+                // Calculate results
+                const stateInfo = stateData[location];
+                const carbonFootprint = calculateCarbonFootprint(kwh, location);
+                const solarSavings = calculateSolarSavings(kwh, stateInfo.sunHours, stateInfo.electricityRate);
+                const windSavings = calculateWindSavings(kwh, stateInfo.windPotential, stateInfo.electricityRate);
+                
+                // Display results
+                displayResults(kwh, bill, carbonFootprint, solarSavings, windSavings, stateInfo);
+            });
+            
+            function calculateCarbonFootprint(kwh, location) {
+                // National average is 0.85 lbs CO2 per kWh
+                // Adjust slightly based on state energy mix
+                const stateFactors = {
+                    'CA': 0.5,  // More renewables
+                    'TX': 0.9,
+                    'FL': 0.8,
+                    'NY': 0.6,
+                    'PA': 0.95, // More coal
+                    'IL': 0.7,
+                    'OH': 0.9,
+                    'GA': 0.8,
+                    'NC': 0.75,
+                    'MI': 0.85
+                };
+                
+                const factor = stateFactors[location] || 0.85;
+                return kwh * factor * 12; // Annual in lbs
+            }
+            
+            function calculateSolarSavings(kwh, sunHours, electricityRate) {
+                // Simplified solar calculation
+                const systemSize = kwh / (sunHours * 30); // kW system needed
+                const annualProduction = systemSize * sunHours * 365; // kWh/year
+                const annualSavings = annualProduction * electricityRate;
+                const systemCost = systemSize * 3000; // $3 per watt installed
+                const paybackYears = systemCost / annualSavings;
+                
+                return {
+                    systemSize: systemSize.toFixed(2),
+                    annualSavings: annualSavings.toFixed(0),
+                    systemCost: systemCost.toFixed(0),
+                    paybackYears: paybackYears.toFixed(1),
+                    annualProduction: annualProduction.toFixed(0)
+                };
+            }
+            
+            function calculateWindSavings(kwh, windPotential, electricityRate) {
+                // Simplified wind calculation
+                let turbineSize = 0;
+                let productionFactor = 0;
+                
+                if (windPotential === 'High') {
+                    turbineSize = kwh / (0.4 * 24 * 30); // 40% capacity factor
+                    productionFactor = 0.4;
+                } else if (windPotential === 'Medium') {
+                    turbineSize = kwh / (0.3 * 24 * 30);
+                    productionFactor = 0.3;
+                } else {
+                    turbineSize = kwh / (0.2 * 24 * 30);
+                    productionFactor = 0.2;
+                }
+                
+                const annualProduction = turbineSize * productionFactor * 24 * 365;
+                const annualSavings = annualProduction * electricityRate;
+                const systemCost = turbineSize * 2000; // $2 per watt installed
+                const paybackYears = systemCost / annualSavings;
+                
+                return {
+                    turbineSize: turbineSize.toFixed(2),
+                    annualSavings: annualSavings.toFixed(0),
+                    systemCost: systemCost.toFixed(0),
+                    paybackYears: paybackYears.toFixed(1),
+                    annualProduction: annualProduction.toFixed(0),
+                    feasibility: windPotential
+                };
+            }
+            
+            function displayResults(kwh, bill, carbonFootprint, solarSavings, windSavings, stateInfo) {
+                const carbonInTons = (carbonFootprint / 2000).toFixed(1);
+                const annualBill = bill * 12;
+                
+                let windFeasibilityClass = 'bg-yellow-100 text-yellow-800';
+                if (stateInfo.windPotential === 'High') {
+                    windFeasibilityClass = 'bg-green-100 text-green-800';
+                } else if (stateInfo.windPotential === 'Low') {
+                    windFeasibilityClass = 'bg-red-100 text-red-800';
+                }
+                
+                resultsDiv.innerHTML = `
+                    <div class="space-y-6">
+                        <!-- Summary Card -->
+                        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 result-card">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Your Current Energy Profile</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="text-center p-3 bg-blue-50 rounded-lg">
+                                    <p class="text-sm text-blue-600">Monthly Usage</p>
+                                    <p class="text-2xl font-bold text-blue-800">${kwh} kWh</p>
+                                </div>
+                                <div class="text-center p-3 bg-purple-50 rounded-lg">
+                                    <p class="text-sm text-purple-600">Annual Bill</p>
+                                    <p class="text-2xl font-bold text-purple-800">$${annualBill.toFixed(0)}</p>
+                                </div>
+                                <div class="text-center p-3 bg-red-50 rounded-lg">
+                                    <p class="text-sm text-red-600">Carbon Footprint</p>
+                                    <p class="text-2xl font-bold text-red-800">${carbonInTons} tons CO₂</p>
+                                </div>
+                            </div>
+                            <div class="mt-4 text-sm text-gray-600">
+                                <p>Your carbon footprint is equivalent to ${Math.round(carbonFootprint/100)} flights from NY to London!</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Solar Option -->
+                        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 result-card">
+                            <div class="flex items-start">
+                                <div class="bg-yellow-100 p-3 rounded-full mr-4">
+                                    <i class="fas fa-solar-panel text-yellow-600 text-2xl"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <h3 class="text-lg font-semibold text-gray-800">Solar Panels</h3>
+                                            <p class="text-sm text-gray-500">Potential for your ${stateInfo.solarPotential} solar region</p>
+                                        </div>
+                                        <span class="px-3 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
+                                            Recommended
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4">
+                                        <div class="text-center p-3 bg-gray-50 rounded-lg">
+                                            <p class="text-sm text-gray-600">System Size</p>
+                                            <p class="text-xl font-bold text-gray-800">${solarSavings.systemSize} kW</p>
+                                        </div>
+                                        <div class="text-center p-3 bg-gray-50 rounded-lg">
+                                            <p class="text-sm text-gray-600">Annual Savings</p>
+                                            <p class="text-xl font-bold text-green-600">$${solarSavings.annualSavings}</p>
+                                        </div>
+                                        <div class="text-center p-3 bg-gray-50 rounded-lg">
+                                            <p class="text-sm text-gray-600">System Cost</p>
+                                            <p class="text-xl font-bold text-gray-800">$${solarSavings.systemCost}</p>
+                                        </div>
+                                        <div class="text-center p-3 bg-gray-50 rounded-lg">
+                                            <p class="text-sm text-gray-600">Payback Period</p>
+                                            <p class="text-xl font-bold text-gray-800">${solarSavings.paybackYears} yrs</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-4">
+                                        <div class="flex items-center mb-2">
+                                            <div class="w-1/4">
+                                                <span class="text-sm font-medium text-gray-700">Your Bill</span>
+                                            </div>
+                                            <div class="w-3/4">
+                                                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                                    <div class="bg-blue-600 h-2.5 rounded-full" style="width: 100%"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="flex items-center">
+                                            <div class="w-1/4">
+                                                <span class="text-sm font-medium text-gray-700">With Solar</span>
+                                            </div>
+                                            <div class="w-3/4">
+                                                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                                    <div class="bg-green-500 h-2.5 rounded-full" style="width: ${Math.max(0, 100 - (solarSavings.annualSavings/annualBill*100))}%"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <button class="mt-4 w-full md:w-auto bg-yellow-500 hover:bg-yellow-600 text-white font-medium py-2 px-6 rounded-md transition duration-300 flex items-center justify-center">
+                                        <i class="fas fa-info-circle mr-2"></i> Get Solar Quotes
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Wind Option -->
+                        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 result-card">
+                            <div class="flex items-start">
+                                <div class="bg-blue-100 p-3 rounded-full mr-4">
+                                    <i class="fas fa-wind text-blue-600 text-2xl"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <h3 class="text-lg font-semibold text-gray-800">Wind Turbine</h3>
+                                            <p class="text-sm text-gray-500">${stateInfo.windPotential} wind potential in your area</p>
+                                        </div>
+                                        <span class="px-3 py-1 ${windFeasibilityClass} text-sm font-medium rounded-full">
+                                            ${stateInfo.windPotential} Feasibility
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4">
+                                        <div class="text-center p-3 bg-gray-50 rounded-lg">
+                                            <p class="text-sm text-gray-600">Turbine Size</p>
+                                            <p class="text-xl font-bold text-gray-800">${windSavings.turbineSize} kW</p>
+                                        </div>
+                                        <div class="text-center p-3 bg-gray-50 rounded-lg">
+                                            <p class="text-sm text-gray-600">Annual Savings</p>
+                                            <p class="text-xl font-bold text-green-600">$${windSavings.annualSavings}</p>
+                                        </div>
+                                        <div class="text-center p-3 bg-gray-50 rounded-lg">
+                                            <p class="text-sm text-gray-600">System Cost</p>
+                                            <p class="text-xl font-bold text-gray-800">$${windSavings.systemCost}</p>
+                                        </div>
+                                        <div class="text-center p-3 bg-gray-50 rounded-lg">
+                                            <p class="text-sm text-gray-600">Payback Period</p>
+                                            <p class="text-xl font-bold text-gray-800">${windSavings.paybackYears} yrs</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-4 bg-blue-50 p-4 rounded-lg">
+                                        <div class="flex">
+                                            <i class="fas fa-info-circle text-blue-500 mt-1 mr-3"></i>
+                                            <p class="text-sm text-blue-700">
+                                                ${stateInfo.windPotential === 'High' ? 
+                                                'Your location has excellent wind resources! Small wind turbines could be a great option.' : 
+                                                stateInfo.windPotential === 'Medium' ? 
+                                                'Your location has moderate wind resources. Consider a professional site assessment.' : 
+                                                'Your location has limited wind resources. Solar may be a better option.'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <button class="mt-4 w-full md:w-auto bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-6 rounded-md transition duration-300 flex items-center justify-center">
+                                        <i class="fas fa-wind mr-2"></i> Explore Wind Options
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Carbon Reduction -->
+                        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 result-card">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Your Potential Carbon Reduction</h3>
+                            <div class="flex flex-col md:flex-row items-center">
+                                <div class="w-full md:w-1/2 mb-4 md:mb-0">
+                                    <div class="h-8 bg-gray-200 rounded-full overflow-hidden">
+                                        <div class="h-full bg-red-500" style="width: 100%"></div>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mt-2">Current: ${carbonInTons} tons CO₂/year</p>
+                                </div>
+                                <div class="w-12 text-center mx-4">
+                                    <i class="fas fa-arrow-right text-gray-400 text-xl"></i>
+                                </div>
+                                <div class="w-full md:w-1/2">
+                                    <div class="h-8 bg-gray-200 rounded-full overflow-hidden">
+                                        <div class="h-full bg-green-500" style="width: ${Math.round(100 - (carbonFootprint * 0.7 / 2000) / carbonInTons * 100)}%"></div>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mt-2">With Renewables: ${(carbonInTons * 0.3).toFixed(1)} tons CO₂/year</p>
+                                </div>
+                            </div>
+                            <div class="mt-6 bg-green-50 p-4 rounded-lg">
+                                <div class="flex">
+                                    <i class="fas fa-leaf text-green-600 mt-1 mr-3"></i>
+                                    <p class="text-sm text-green-800">
+                                        By switching to renewable energy, you could reduce your carbon footprint by 70% - equivalent to planting ${Math.round(carbonFootprint/100)} trees every year!
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // Add animation to results
+                const cards = document.querySelectorAll('.result-card');
+                cards.forEach((card, index) => {
+                    setTimeout(() => {
+                        card.classList.add('animate-pulse');
+                        setTimeout(() => {
+                            card.classList.remove('animate-pulse');
+                        }, 1000);
+                    }, index * 200);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
